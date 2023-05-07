@@ -1,9 +1,9 @@
 from collections import Counter
 from tkinter import filedialog
 import tkinter as tk
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import scipy.spatial.distance as dist
 
@@ -14,13 +14,13 @@ def lecturaArchivo():
     archivo_csv = filedialog.askopenfilename(filetypes=[("Archivo CSV", "*.csv")])
     # Leer el archivo CSV seleccionado
     try:
+        df.drop(index=df.index, columns=df.columns, inplace=True)
         datos = pd.read_csv(archivo_csv)
         df = pd.concat([df, datos], ignore_index=True)
         print("Datos ingresados correctamente")
         return df
     except FileNotFoundError:
         print("No se eligió el archivo")
-
 
 def calcularKVecinos(mejorK):
     num_filas, num_columnas = df.shape
@@ -42,7 +42,7 @@ def calcularKVecinos(mejorK):
     if num_columnas-1 <3:
         dibujar2D(nombres_columnas,datosEntrenamiento,color_dict,nombre_ultima_columna)
     elif num_columnas-1 == 3:
-        dibujar3D(nombres_columnas,datosEntrenamiento,color_dict,nombre_ultima_columna)
+        dibujar3D(nombres_columnas,datosEntrenamiento,nombre_ultima_columna)
     print(frecuencias)
     distancia = []
     listaTabla = []
@@ -110,7 +110,6 @@ def calcularKVecinos(mejorK):
     print(f"El mejor k es {mejorK} con un ", precisionMax)
     return mejorK
 
-
 def dibujar2D(nombres_columnas,sub_df,color_dict,nombre_ultima_columna):
     sns.scatterplot(x=nombres_columnas[0], y=nombres_columnas[1], hue=nombre_ultima_columna, data=sub_df, palette=color_dict)
     plt.scatter(sub_df.iloc[:,0], sub_df.iloc[:,1], c=sub_df[nombre_ultima_columna].apply(lambda x: color_dict[x]), marker='s')
@@ -118,13 +117,18 @@ def dibujar2D(nombres_columnas,sub_df,color_dict,nombre_ultima_columna):
     plt.ylabel(nombres_columnas[1])
     plt.show()
 
-def dibujar3D(nombres_columnas,sub_df,color_dict,nombre_ultima_columna):
+def dibujar3D(nombres_columnas, df, nombre_ultima_columna):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(sub_df[nombres_columnas[0]], sub_df[nombres_columnas[1]], sub_df[nombres_columnas[2]],marker='s')
+    clases = df[nombre_ultima_columna].unique()
+    color_dict = {clase: np.random.rand(3,) for clase in clases} # generamos un diccionario con un color aleatorio por cada clase
+    for clase, color in color_dict.items():
+        temp_df = df[df[nombre_ultima_columna] == clase]
+        ax.scatter(temp_df[nombres_columnas[0]], temp_df[nombres_columnas[1]], temp_df[nombres_columnas[2]], color=color, marker='s', label=str(clase))
     ax.set_xlabel(nombres_columnas[0])
     ax.set_ylabel(nombres_columnas[1])
     ax.set_zlabel(nombres_columnas[2])
+    plt.legend()
     plt.show()
 
 def predecirClasificacion(k):
@@ -187,6 +191,5 @@ def menu():
                 break
         except ValueError:
             print("Opcion invalida")
-
 
 menu()
