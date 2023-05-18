@@ -7,37 +7,37 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.spatial.distance as dist
 
-df = pd.DataFrame()
+dataframe = pd.DataFrame()
 def lecturaArchivo():
 
-    global df
+    global dataframe
     archivo_csv = filedialog.askopenfilename(filetypes=[("Archivo CSV", "*.csv")])
     # Leer el archivo CSV seleccionado
     try:
-        df.drop(index=df.index, columns=df.columns, inplace=True)
+        dataframe.drop(index=dataframe.index, columns=dataframe.columns, inplace=True)
         datos = pd.read_csv(archivo_csv)
-        df = pd.concat([df, datos], ignore_index=True)
+        dataframe = pd.concat([dataframe, datos], ignore_index=True)
         print("Datos ingresados correctamente")
-        return df
+        return dataframe
     except FileNotFoundError:
         print("No se eligió el archivo")
 
 def calcularKVecinos(mejorK):
-    num_filas, num_columnas = df.shape
+    num_filas, num_columnas = dataframe.shape
     print("Numero de variables: ", num_columnas-1)
-    nombres_columnas = list(df.columns)
-    indice = int(0.8 * df.shape[0])  # calcula el indice del 80% de las filas
+    nombres_columnas = list(dataframe.columns)
+    indice = int(0.8 * dataframe.shape[0])  # calcula el indice del 80% de las filas
     print("El 80% de datos es: ", indice)
-    nombre_ultima_columna = df.columns[-1]  # obtiene el nombre de la ultima columna
-    datosEntrenamiento = df.iloc[:indice]    # selecciona solo las filas hasta ese indice
-    datosPrueba = df.iloc[indice:]  # selecciona solo las filas desde ese indice
+    nombre_ultima_columna = dataframe.columns[-1]  # obtiene el nombre de la ultima columna
+    datosEntrenamiento = dataframe.iloc[:indice]    # selecciona solo las filas hasta ese indice
+    datosPrueba = dataframe.iloc[indice:]  # selecciona solo las filas desde ese indice
     print("DatosEntrenamiento")
     print(datosEntrenamiento)
     print("DatosPrueba")
     print(datosPrueba)
     palette = sns.color_palette("bright", len(datosEntrenamiento[nombre_ultima_columna].unique()))
     color_dict = dict(zip(datosEntrenamiento[nombre_ultima_columna].unique(), palette))
-    frecuencias = df.iloc[:indice, -1].value_counts().reset_index()
+    frecuencias = dataframe.iloc[:indice, -1].value_counts().reset_index()
     frecuencias.columns = ['Clase', 'Frecuencia']
     if num_columnas-1 <3:
         dibujar2D(nombres_columnas,datosEntrenamiento,color_dict,nombre_ultima_columna)
@@ -46,9 +46,9 @@ def calcularKVecinos(mejorK):
     print(frecuencias)
     distancia = []
     listaTabla = []
-    for i in range(indice,df.shape[0]):
+    for i in range(indice, dataframe.shape[0]):
         for j in range(0,indice):
-            distancia.append(dist.euclidean(df.iloc[i, :-1].values,df.iloc[j, :-1].values))
+            distancia.append(dist.euclidean(dataframe.iloc[i, :-1].values, dataframe.iloc[j, :-1].values))
         dfModificado = datosEntrenamiento.copy()
         dfModificado['DistanciasCalculadas'] = distancia
         dfModificado.sort_values(by=['DistanciasCalculadas'], inplace=True)
@@ -132,8 +132,8 @@ def dibujar3D(nombres_columnas, df, nombre_ultima_columna):
     plt.show()
 
 def predecirClasificacion(k):
-    print(k)
-    if df.empty:
+    """print(k)
+    if dataframe.empty:
         print("Primero debe cargar un archivo para entrenar el modelo")
         return
     if k==0:
@@ -144,9 +144,9 @@ def predecirClasificacion(k):
     dato = [float(x) for x in dato]
     print(dato)
     distancia = []
-    for i in range(df.shape[0]):
-        distancia.append(dist.euclidean(dato, df.iloc[i,:-1]))
-    df_modificado = df.copy()
+    for i in range(dataframe.shape[0]):
+        distancia.append(dist.euclidean(dato, dataframe.iloc[i, :-1]))
+    df_modificado = dataframe.copy()
     df_modificado['DistanciasCalculadas'] = distancia
     print(df_modificado)
     df_modificado.sort_values(by=['DistanciasCalculadas'], inplace=True)
@@ -155,7 +155,45 @@ def predecirClasificacion(k):
     print(clases)
     frecuencia_clases = Counter(clases)
     clase_predicha = max(frecuencia_clases, key=frecuencia_clases.get)
-    print(f"La clase predicha es: {clase_predicha}")
+    print(f"La clase predicha es: {clase_predicha}")"""
+
+    #CAMBIO PARA INTERCICLO
+    print(k)
+    if dataframe.empty:
+        print("Primero debe cargar un archivo para entrenar el modelo")
+        return
+    if k == 0:
+        print("Primero debe entrenar el modelo")
+        return
+
+    num_datos = int(input("Ingrese la cantidad de datos a predecir: "))
+    datos = []
+    for _ in range(num_datos):
+        dato = input("Ingrese los datos a predecir separados por comas: ")
+        dato = dato.split(",")
+        dato = [float(x) for x in dato]
+        datos.append(dato)
+    valorK = int(input("Ingrese el valor de k: "))
+    classPred = []
+    for dato in datos:
+        print(dato)
+        distancia = []
+        indice = int(0.8 * dataframe.shape[0])  # calcula el indice del 80% de las filas
+        df_modificado = dataframe.iloc[:indice]    # selecciona solo las filas hasta ese indice
+        for i in range(df_modificado.shape[0]):
+            distancia.append(dist.euclidean(dato, df_modificado.iloc[i, :-1]))
+        dfmod = df_modificado.copy()
+        dfmod['DistanciasCalculadas'] = distancia
+        print(dfmod)
+        dfmod.sort_values(by=['DistanciasCalculadas'], inplace=True)
+        print(dfmod)
+        clases = dfmod.iloc[:valorK, -2].values
+        print(clases)
+        frecuencia_clases = Counter(clases)
+        clase_predicha = max(frecuencia_clases, key=frecuencia_clases.get)
+        print(f"La clase predicha es: {clase_predicha}")
+        classPred.append(clase_predicha)
+    print("Las clases predichas son:", classPred)
 
 def menu():
     mejorK = 0
@@ -170,7 +208,7 @@ def menu():
             opc = int(input("Opcion: "))
             if opc == 1:
                 try:
-                    df.drop(index=df.index, columns=df.columns, inplace=True)
+                    dataframe.drop(index=dataframe.index, columns=dataframe.columns, inplace=True)
                     # Crear la ventana principal
                     root = tk.Tk()
                     # Agregar un botón para abrir el cuadro de diálogo de selección de archivos
@@ -181,7 +219,7 @@ def menu():
                 except:
                     print("No se eligió el archivo")
             elif opc == 2:
-                print(df)
+                print(dataframe)
             elif opc == 3:
                 mejorK=calcularKVecinos(mejorK)
             elif opc == 4:
